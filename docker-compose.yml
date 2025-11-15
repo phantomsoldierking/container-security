@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # LocalStack - AWS Service Emulator
   localstack:
@@ -46,26 +44,32 @@ services:
 
   # MLflow - ML Model Tracking
   mlflow:
-    image: ghcr.io/mlflow/mlflow:latest
+    build:
+      context: ./mlflow
+      dockerfile: Dockerfile
     container_name: security-mlflow
     ports:
       - "5000:5000"
     environment:
       - MLFLOW_BACKEND_STORE_URI=postgresql://security_user:security_pass@postgres:5432/security_db
       - MLFLOW_ARTIFACT_ROOT=/mlflow/artifacts
+      - MLFLOW_CORS_ORIGINS=*          # allow cross origin (for UI)
     volumes:
       - "mlflow_data:/mlflow"
+    # Add --allowed-hosts="*" here
     command: >
       mlflow server
       --backend-store-uri postgresql://security_user:security_pass@postgres:5432/security_db
       --default-artifact-root /mlflow/artifacts
       --host 0.0.0.0
       --port 5000
+      --allowed-hosts="*"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - security-net
+
 
   # Scanner Service
   scanner:
